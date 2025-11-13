@@ -1,0 +1,58 @@
+{
+  "name": "JamMate BLE Controller",
+  "short_name": "JamMate",
+  "description": "Professional Bluetooth BLE guitar effects controller with parametric EQ, drum machine, and amp modeling",
+  "start_url": "/JamMate-GUI/GUI_WebApp.html",
+  "scope": "/JamMate-GUI/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#222",
+  "theme_color": "#00b0b0",
+  "screenshots": [
+    {
+      "src": "screenshot-1.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ],
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["music", "productivity"],
+  "screenshots": [
+    {
+      "src": "screenshot-1.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "screenshot-2.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ],
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "Open Effects",
+      "short_name": "Effects",
+      "description": "Open effects tab",
+      "url": "/JamMate-GUI/GUI_WebApp.html?tab=effects",
+      "icons": []
+    }
+  ]
+}
