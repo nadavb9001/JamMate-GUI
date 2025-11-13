@@ -2,7 +2,7 @@
   "name": "JamMate BLE Controller",
   "short_name": "JamMate",
   "description": "Professional Bluetooth BLE guitar effects controller with parametric EQ, drum machine, and amp modeling",
-  "start_url": "/JamMate-GUI/GUI_WebApp.html",
+  "start_url": "/JamMate-GUI/GUI.html",
   "scope": "/JamMate-GUI/",
   "display": "standalone",
   "orientation": "portrait-primary",
