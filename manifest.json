@@ -8,39 +8,6 @@
   "orientation": "portrait-primary",
   "background_color": "#222",
   "theme_color": "#00b0b0",
-  "screenshots": [
-    {
-      "src": "screenshot-1.png",
-      "sizes": "540x720",
-      "type": "image/png",
-      "form_factor": "narrow"
-    }
-  ],
-  "icons": [
-    {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    }
-  ],
   "categories": ["music", "productivity"],
-  "screenshots": [
-    {
-      "src": "screenshot-1.png",
-      "sizes": "540x720",
-      "type": "image/png",
-      "form_factor": "narrow"
-    }
-  ],
-  "prefer_related_applications": false,
-  "shortcuts": [
-    {
-      "name": "Open Effects",
-      "short_name": "Effects",
-      "description": "Open effects tab",
-      "url": "/JamMate-GUI/GUI_WebApp.html?tab=effects",
-      "icons": []
-    }
-  ]
+  "prefer_related_applications": false
 }
