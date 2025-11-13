@@ -1,0 +1,2971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>JamMate BLE Controller</title>
+    <style>
+        :root {
+            --color-bg-base: #222;
+            --color-bg-elevated: #333;
+            --color-bg-surface: #444;
+            --color-text-primary: #fff;
+            --color-text-secondary: #aaa;
+            --color-accent: #00b0b0;
+            --color-accent-hover: #009090;
+            --color-enabled: #0a0;
+            --color-enabled-selected: #0c0;
+            --color-error: #c33;
+            --color-border: #555;
+        }
+        
+        /* Light Colorful Theme */
+        body.light-theme {
+            --color-bg-base: #f0f4f8;
+            --color-bg-elevated: #fff;
+            --color-bg-surface: #e8f0f8;
+            --color-text-primary: #1a2332;
+            --color-text-secondary: #4a5568;
+            --color-accent: #0099cc;
+            --color-accent-hover: #007aa3;
+            --color-enabled: #10b981;
+            --color-enabled-selected: #059669;
+            --color-error: #ef4444;
+            --color-border: #cbd5e1;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--color-bg-base);
+            color: var(--color-text-primary);
+            overflow-x: hidden;
+            touch-action: pan-y;
+        }
+        
+        /* Header */
+        #header {
+            background: var(--color-bg-elevated);
+            padding: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .device-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status-led {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--color-error);
+            box-shadow: 0 0 10px rgba(195,51,51,0.8);
+            transition: all 0.3s;
+        }
+        
+        .status-led.connected {
+            background: var(--color-enabled);
+            box-shadow: 0 0 10px rgba(0,170,0,0.8);
+        }
+        
+        .device-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--color-accent);
+        }
+        
+        .btn-connect {
+            padding: 10px 20px;
+            background: var(--color-accent);
+            border: none;
+            border-radius: 5px;
+            color: #000;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .btn-connect:active {
+            background: var(--color-accent-hover);
+        }
+        
+        .btn-connect:disabled {
+            background: var(--color-border);
+            cursor: not-allowed;
+        }
+        
+        .btn-fullscreen {
+            padding: 10px;
+            background: var(--color-bg-surface);
+            border: 2px solid var(--color-border);
+            border-radius: 5px;
+            color: var(--color-text-primary);
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn-fullscreen:hover {
+            background: var(--color-accent);
+            color: #000;
+            border-color: var(--color-accent);
+        }
+        
+        .btn-fullscreen:active {
+            transform: scale(0.95);
+        }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            background: var(--color-bg-elevated);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            border-bottom: 2px solid var(--color-border);
+        }
+        
+        .tab {
+            flex: 1;
+            min-width: 80px;
+            padding: 15px 10px;
+            text-align: center;
+            font-weight: bold;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            white-space: nowrap;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            background: var(--color-accent);
+            color: #000;
+            border-bottom-color: var(--color-accent);
+        }
+        
+        /* Tab Content */
+        .tab-content {
+            display: none;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Effects Horizontal Scroll */
+        .effects-scroll {
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+            margin-bottom: 20px;
+            padding: 10px 0;
+        }
+        
+        .effects-grid {
+            display: flex;
+            gap: 10px;
+            padding: 5px;
+        }
+        
+        .effect-btn {
+            min-width: 80px;
+            width: 80px;
+            height: 80px;
+            background: var(--color-bg-surface);
+            border: 2px solid var(--color-border);
+            border-radius: 8px;
+            color: var(--color-text-primary);
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 5px;
+            transition: all 0.2s;
+            word-wrap: break-word;
+            flex-shrink: 0;
+            user-select: none;
+        }
+        
+        .effect-btn.selected {
+            background: var(--color-accent);
+            color: #000;
+            border-color: var(--color-accent);
+        }
+        
+        .effect-btn.enabled {
+            background: var(--color-bg-surface);
+            border-color: var(--color-enabled);
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.6), inset 0 0 10px rgba(0, 255, 0, 0.2);
+        }
+        
+        .effect-btn.enabled.selected {
+            background: var(--color-enabled-selected);
+            border-color: var(--color-enabled-selected);
+        }
+        
+        .effect-btn:active {
+            transform: scale(0.95);
+        }
+        
+        /* Rotary Knob */
+        .knob-container {
+            display: inline-block;
+            text-align: center;
+            margin: 10px;
+        }
+        
+        .knob {
+            width: 90px;
+            height: 90px;
+            position: relative;
+            cursor: pointer;
+            touch-action: none;
+        }
+        
+        .knob-canvas {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .knob-label {
+            margin-top: 5px;
+            font-size: 12px;
+            font-weight: bold;
+            color: var(--color-text-secondary);
+        }
+        
+        /* Effect Controls */
+        .effect-controls {
+            background: var(--color-bg-elevated);
+            padding: 10px;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+        
+        .effect-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--color-accent);
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .knobs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 2px;
+            justify-items: center;
+            margin-bottom: 5px;
+        }
+        
+        .control-group {
+            margin: 8px 0;
+        }
+        
+        .dropdowns-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .control-label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: var(--color-text-secondary);
+        }
+        
+        .checkbox {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            user-select: none;
+            padding: 10px;
+            background: var(--color-bg-surface);
+            border-radius: 5px;
+        }
+        
+        .checkbox input {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+        }
+        
+        select {
+            width: 100%;
+            padding: 10px;
+            background: var(--color-bg-surface);
+            color: var(--color-text-primary);
+            border: 2px solid var(--color-border);
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2300b0b0' d='M0 0l6 8 6-8z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            padding-right: 35px;
+        }
+        
+        select:focus {
+            border-color: var(--color-accent);
+            outline: none;
+        }
+        
+        /* IIR Designer */
+        .iir-designer {
+            background: var(--color-bg-elevated);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        .iir-canvas {
+            width: 100%;
+            height: 400px;
+            max-height: 60vh;
+            background: #000;
+            border-radius: 10px;
+            border: 2px solid var(--color-border);
+            cursor: crosshair;
+            touch-action: none;
+        }
+        
+        .iir-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .iir-controls button {
+            flex: 1;
+            min-width: 120px;
+        }
+        
+        /* Drum Sequencer */
+        .drum-grid {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 10px 0;
+        }
+        
+        .drum-row {
+            display: flex;
+            gap: 3px;
+            margin-bottom: 5px;
+            align-items: center;
+        }
+        
+        .drum-label {
+            min-width: 70px;
+            font-weight: bold;
+            font-size: 12px;
+            background: var(--color-border);
+            padding: 5px;
+            border-radius: 3px;
+        }
+        
+        .drum-cell {
+            width: 40px;
+            height: 40px;
+            background: var(--color-bg-surface);
+            border: 2px solid var(--color-border);
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            flex-shrink: 0;
+        }
+        
+        .drum-cell.active {
+            background: var(--color-enabled);
+            border-color: var(--color-enabled);
+        }
+        
+        .drum-cell:active {
+            transform: scale(0.9);
+        }
+        
+        .velocity-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 255, 0, 0.3);
+            transition: height 0.1s;
+            border-radius: 0 0 3px 3px;
+        }
+        
+        /* Tuner */
+        .tuner-display {
+            text-align: center;
+            padding: 30px 20px;
+        }
+        
+        .string-display {
+            font-size: 48px;
+            font-weight: bold;
+            color: var(--color-accent);
+            margin-bottom: 10px;
+        }
+        
+        .freq-display {
+            font-size: 32px;
+            color: var(--color-enabled);
+            font-family: 'Courier New', monospace;
+            margin: 20px 0;
+        }
+        
+        .tuner-gauge {
+            width: 100%;
+            max-width: 400px;
+            height: 80px;
+            margin: 20px auto;
+            position: relative;
+            background: var(--color-bg-elevated);
+            border-radius: 10px;
+            border: 2px solid var(--color-border);
+        }
+        
+        .tuner-needle {
+            position: absolute;
+            width: 4px;
+            height: 60px;
+            background: #f00;
+            left: 50%;
+            top: 10px;
+            transform: translateX(-50%);
+            transition: all 0.3s;
+        }
+        
+        .tuner-center {
+            position: absolute;
+            width: 3px;
+            height: 80px;
+            background: #fff;
+            left: 50%;
+            top: 0;
+            transform: translateX(-50%);
+        }
+        
+        /* File Loader */
+        .file-upload-btn {
+            display: inline-block;
+        }
+        
+        .file-upload-btn input {
+            display: none;
+        }
+        
+        .waveform-canvas {
+            width: 100%;
+            height: 200px;
+            background: var(--color-bg-elevated);
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 2px solid var(--color-border);
+        }
+        
+        .spectrum-canvas {
+            width: 100%;
+            height: 300px;
+            background: #000;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 2px solid var(--color-border);
+        }
+        
+        /* Preset Controls */
+        .preset-controls {
+            background: var(--color-bg-elevated);
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .preset-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .preset-row > * {
+            flex: 1;
+        }
+        
+        button {
+            padding: 12px 20px;
+            background: var(--color-accent);
+            border: none;
+            border-radius: 5px;
+            color: #000;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        button:active {
+            background: var(--color-accent-hover);
+        }
+        
+        button:disabled {
+            background: var(--color-border);
+            cursor: not-allowed;
+        }
+        
+        /* Status Bar */
+        #status-bar {
+            background: var(--color-bg-elevated);
+            padding: 10px 15px;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            font-size: 12px;
+            border-top: 1px solid var(--color-bg-surface);
+            z-index: 999;
+        }
+        
+        /* Mobile Optimizations */            @media (max-width: 768px) {
+            .knobs-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .knob {
+                width: 80px;
+                height: 80px;
+            }
+            
+            .drum-cell {
+                width: 35px;
+                height: 35px;
+            }
+            
+            .iir-canvas {
+                height: 300px;
+                max-height: 50vh;
+            }
+        }
+        
+        @media (orientation: landscape) and (max-height: 600px) {
+            .iir-canvas {
+                height: 250px;
+                max-height: 40vh;
+            }
+            
+            .effect-controls {
+                padding: 10px;
+            }
+            
+            .knobs-grid {
+                gap: 3px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div id="header">
+        <div class="header-content">
+            <div class="device-info">
+                <div class="status-led" id="statusLed"></div>
+                <div class="device-name">JamMate_BL</div>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <button class="btn-fullscreen" id="btnTheme" title="Toggle Theme">🎨</button>
+                <button class="btn-fullscreen" id="btnFullscreen" title="Toggle Fullscreen">⛶</button>
+                <button class="btn-connect" id="btnConnect">Connect BLE</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tabs -->
+    <div class="tabs" id="tabs">
+        <div class="tab active" data-tab="effects">Effects</div>
+        <div class="tab" data-tab="drum">Drum</div>
+        <div class="tab" data-tab="tuner">Tuner</div>
+        <div class="tab" data-tab="setup">Setup</div>
+        <div class="tab" data-tab="presets">Presets</div>
+        <div class="tab" data-tab="loader">Files</div>
+    </div>
+    
+    <!-- Effects Tab -->
+    <div class="tab-content active" id="effects-tab">
+        <div class="preset-controls">
+            <div class="preset-row">
+                <div>
+                    <label class="control-label">Bank</label>
+                    <select id="presetBank">
+                        <option>Clean</option>
+                        <option>Crunch</option>
+                        <option>Overdrive</option>
+                        <option>Distortion</option>
+                        <option>Modulated</option>
+                        <option>Custom1</option>
+                        <option>Custom2</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="control-label">Number</label>
+                    <select id="presetNum">
+                        <option>1</option>
+                        <option>2</option>
+                        <option>3</option>
+                        <option>4</option>
+                        <option>5</option>
+                    </select>
+                </div>
+            </div>
+            <div class="knobs-grid">
+                <div class="knob-container">
+                    <div class="knob" id="masterKnob"></div>
+                    <div class="knob-label">Master</div>
+                </div>
+                <div class="knob-container">
+                    <div class="knob" id="bpmKnob"></div>
+                    <div class="knob-label">BPM</div>
+                </div>
+                <div class="knob-container">
+                    <div class="knob" id="blVolKnob"></div>
+                    <div class="knob-label">BT Vol</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="effects-scroll">
+            <div class="effects-grid" id="effectsGrid"></div>
+        </div>
+        <div id="effectControls"></div>
+    </div>
+    
+    <!-- Drum Tab -->
+    <div class="tab-content" id="drum-tab">
+        <div class="preset-controls">
+            <div class="knobs-grid">
+                <div class="knob-container">
+                    <div class="knob" id="drumLevelKnob"></div>
+                    <div class="knob-label">Level</div>
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="checkbox">
+                    <input type="checkbox" id="drumEnable" checked>
+                    <span>Enable Drum</span>
+                </label>
+            </div>
+            <div class="preset-row">
+                <div>
+                    <label class="control-label">Style</label>
+                    <select id="drumStyle">
+                        <option>Rock</option>
+                        <option>Blues</option>
+                        <option>Jazz</option>
+                        <option>Shuffle</option>
+                        <option>Pop</option>
+                        <option>Metal</option>
+                        <option>Latin</option>
+                        <option>R&amp;B</option>
+                        <option>Country</option>
+                        <option>Funk</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="control-label">Fill</label>
+                    <select id="drumFill">
+                        <option>None</option>
+                        <option>x1</option>
+                        <option>x4</option>
+                        <option>x12</option>
+                        <option>x16</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <div class="drum-grid" id="drumGrid"></div>
+    </div>
+    
+    <!-- Tuner Tab -->
+    <div class="tab-content" id="tuner-tab">
+        <div class="tuner-display">
+            <label class="checkbox" style="justify-content: center; margin-bottom: 20px;">
+                <input type="checkbox" id="tunerEnable">
+                <span>Enable Tuner</span>
+            </label>
+            
+            <div class="string-display" id="stringDisplay">--</div>
+            <div style="color: #888;">Target: <span id="targetFreq">-- Hz</span></div>
+            
+            <div class="tuner-gauge">
+                <div class="tuner-center"></div>
+                <div class="tuner-needle" id="tunerNeedle"></div>
+            </div>
+            
+            <div class="freq-display" id="freqDisplay">-- Hz</div>
+            <div style="color: #888; font-size: 18px;" id="centsDisplay">-- cents</div>
+        </div>
+    </div>
+    
+    <!-- Tracks Tab -->
+    <div class="tab-content" id="tracks-tab">
+        <div class="preset-controls">
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <input 
+                    type="text" 
+                    id="youtubeSearchInput" 
+                    placeholder="Search for backing tracks, songs..."
+                    style="flex: 1; padding: 12px; background: var(--color-bg-surface); color: var(--color-text-primary); border: 2px solid var(--color-border); border-radius: 5px; font-size: 16px;"
+                >
+                <button onclick="app.searchYouTube()" style="min-width: 100px;">🔍 Search</button>
+            </div>
+        </div>
+        
+        <div id="youtubeResults" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; margin-bottom: 20px;"></div>
+        
+        <div id="youtubePlayer" style="display: none;">
+            <div style="margin-bottom: 10px;">
+                <button onclick="app.closeYouTubePlayer()" style="background: var(--color-error);">✖ Close Player</button>
+            </div>
+            <iframe 
+                id="youtubeFrame"
+                src=""
+                style="width: 100%; height: 480px; border: 2px solid var(--color-border); border-radius: 10px; background: #000;"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen>
+            </iframe>
+        </div>
+    </div>
+    
+    <!-- Setup Tab -->
+    <div class="tab-content" id="setup-tab">
+        <div class="preset-controls">
+            <h2 style="text-align: center; color: var(--color-accent); margin-bottom: 20px;">Daisy Control</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                <button style="background: #f44; height: 60px;" onclick="app.sendResetDaisy()">Reset Daisy</button>
+                <button style="background: #f80; height: 60px;" onclick="app.sendFlashDaisy()">Flash Daisy</button>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <label class="checkbox">
+                    <input type="checkbox" id="btEnable">
+                    <span>Enable Bluetooth</span>
+                </label>
+                <label class="checkbox">
+                    <input type="checkbox" id="bleEnable">
+                    <span>Enable BLE</span>
+                </label>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Presets Tab -->
+    <div class="tab-content" id="presets-tab">
+        <div class="preset-controls">
+            <button onclick="app.savePreset()">Save Current Preset</button>
+            <button onclick="app.loadPreset()">Load Preset</button>
+            <button onclick="app.exportConfig()">Export Config</button>
+            <button onclick="app.importConfig()">Import Config</button>
+        </div>
+    </div>
+    
+    <!-- File Loader Tab -->
+    <div class="tab-content" id="loader-tab">
+        <div class="preset-controls">
+            <div class="file-upload-btn">
+                <input type="file" id="fileInput" accept=".wav,audio/wav">
+                <button onclick="document.getElementById('fileInput').click()">📁 Load WAV File</button>
+            </div>
+        </div>
+        <canvas class="waveform-canvas" id="waveformCanvas"></canvas>
+        <canvas class="spectrum-canvas" id="spectrumCanvas"></canvas>
+        <div class="preset-controls">
+            <div>
+                <label class="control-label">Points to Send</label>
+                <select id="irPoints">
+                    <option>128</option>
+                    <option>256</option>
+                    <option selected>512</option>
+                    <option>1024</option>
+                    <option>2048</option>
+                    <option>4096</option>
+                    <option>8192</option>
+                </select>
+            </div>
+            <button id="btnSendIR" disabled>Send IR to Device</button>
+        </div>
+    </div>
+    
+    <!-- Status Bar -->
+    <div id="status-bar">
+        <span id="statusMessage">Ready</span>
+    </div>
+
+    <script>
+        // Configuration data from config.json
+        const CONFIG = {
+  "tabs": [
+    {
+      "title": "Noise Gate",
+      "short_name": "Gate",
+      "params": {
+        "checkbox": "enable",
+        "knobs": [
+          "threshold_db",
+          "hold",
+          "attack",
+          "release",
+          "level",
+          "noise_level",
+          "osc_level"
+        ],
+        "dropdowns": []
+      }
+    },
+    {
+      "title": "Compressor",
+      "short_name": "Comp",
+      "params": {
+        "checkbox": "enable",
+        "knobs": [
+          "level",
+          "ratio",
+          "threshold",
+          "attack",
+          "release",
+          "wet",
+          "dry",
+          "makeup"
+        ],
+        "dropdowns": []
+      }
+    },
+    {
+      "title": "Auto Wah",
+      "short_name": "Awah",
+      "params": {
+        "checkbox": "enable",
+        "knobs": [
+          "level",
+          "wah",
+          "dry",
+          "wet",
+          "rate",
+          "start freq",
+          "stop freq"
+        ],
+        "dropdowns": []
+      }
+    },
+    {
+      "title": "Overdrive",
+      "short_name": "Ovrd",
+      "params": {
+        "checkbox": "enable",
+        "knobs": [
+          "level",
+          "drive",
+          "type",
+          "enPreLPF",
+          "enPreHPF",
+          "enPostLPF",
+          "enPostHPF",
+          "midFreq",
+          "enMid",
+          "blend"
+        ],
+        "dropdowns": [
+          "dist_type",
+          "ovrd_brand"
+        ]
+      }
+    },
+    {
+      "title": "Distortion",
+      "short_name": "Dist",
+      "params": {
+        "checkbox": "enable",
+        "knobs": [
+          "level",
+          "drive",
+          "type",
+          "enPreLPF",
+          "enPreHPF",
+          "enPostLPF",
+          "enPostHPF",
+          "midFreq",
+          "enMid",
+          "blend"
+        ],
+        "dropdowns": [
+          "dist_type",
+          "dist_brand"
+        ]
+      }
+    },
+    {
+      "title": "Equalizer",
+      "short_name": "Equl",
+      "params": {
+        "checkbox": "enable",
+        "knobs": [
+          "level",
+          "hpf",
+          "100",
+          "200",
+          "400",
+          "800",
+          "1600",
+          "3200",
+          "lpf",
+          "q"
+        ],
+        "dropdowns": [
+          "eq_type",
+          "eq_freq_scale"
+        ]
+      }
+    },
+    {
+      "title": "Harmonizer",
+      "short_name": "Harm",
+      "params": {
+        "checkbox": "enable",
+        "knobs": [
+          "Level",
+          "Harm1",
+          "Harm2",
+          "Scale",
+          "Mode",
+          "Dry",
+          "Wet1",
+          "Wet2",
+          "Arpeg",
+          "ArpegRate"
+        ],
+        "dropdowns": [
+          "Scale",
+          "Mode"
+        ]
+      }
+    },
+    {
+      "title": "Vibrato",
+      "short_name": "Vibr",
+      "params": {
+        "checkbox": "enable",
+        "knobs": [
+          "rate",
+          "depth",
+          "flutter"
+        ],
+        "dropdowns": []
+      }
+    },
+    {
+      "title": "Chorus",
+      "short_name": "Chor",
+      "params": {
+        "checkbox": "enable",
+        "knobs": [
+          "level",
+          "rate",
+          "depth",
+          "delay",
+          "feedback",
+          "wet",
+          "dry"
+        ],
+        "dropdowns": []
+      }
+    },
+    {
+      "title": "Octave",
+      "short_name": "Octv",
+      "params": {
+        "checkbox": "enable",
+        "knobs": [
+          "level",
+          "dry",
+          "wet",
+          "shift",
+          "bufsize"
+        ],
+        "dropdowns": []
+      }
+    },
+    {
+      "title": "Flanger",
+      "short_name": "Flng",
+      "params": {
+        "checkbox": "enable",
+        "knobs": [
+          "level",
+          "rate",
+          "depth",
+          "feedback",
+          "delay"
+        ],
+        "dropdowns": []
+      }
+    },
+    {
+      "title": "Phaser",
+      "short_name": "Phas",
+      "params": {
+        "checkbox": "enable",
+        "knobs": [
+          "level",
+          "poles",
+          "lfoFreq",
+          "lfoDepth",
+          "freq",
+          "feedback",
+          "wet",
+          "dry"
+        ],
+        "dropdowns": []
+      }
+    },
+    {
+      "title": "Tremolo",
+      "short_name": "Trem",
+      "params": {
+        "checkbox": "enable",
+        "knobs": [
+          "level",
+          "depth",
+          "rate"
+        ],
+        "dropdowns": []
+      }
+    },
+    {
+      "title": "Amp/Cab",
+      "short_name": "_FIR",
+      "params": {
+        "checkbox": "enable",
+        "knobs": [
+          "level",
+          "model",
+          "treble",
+          "mid",
+          "bass",
+          "presence",
+          "gain"
+        ],
+        "dropdowns": [
+          "amp_type",
+          "tone_type",
+          "ir_points",
+          "ir_type"
+        ]
+      }
+    },
+    {
+      "title": "Delay",
+      "short_name": "Dely",
+      "params": {
+        "checkbox": "enable",
+        "knobs": [
+          "level",
+          "feedback",
+          "time",
+          "LPF",
+          "dry",
+          "wet",
+          "depth",
+          "rate",
+          "multi",
+          "ser/par"
+        ],
+        "dropdowns": [
+          "delay_type",
+          "division"
+        ]
+      }
+    },
+    {
+      "title": "NAM",
+      "short_name": "_NAM",
+      "params": {
+        "checkbox": "enable",
+        "knobs": [
+          "level"
+        ],
+        "dropdowns": [
+          "NAM_Model"
+        ]
+      }
+    },
+    {
+      "title": "Reverb",
+      "short_name": "Rvrb",
+      "params": {
+        "checkbox": "enable",
+        "knobs": [
+          "level",
+          "feedback",
+          "damp",
+          "dry",
+          "wet",
+          "freeze",
+          "gain",
+          "depth",
+          "rate",
+          "type"
+        ],
+        "dropdowns": []
+      }
+    }
+  ],
+  "dropdowns": {
+    "NAM_Model": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10"
+    ],
+    "amp_type": [
+      "None",
+      "Fender 65",
+      "Twin Reverb",
+      "Marshall",
+      "Orange",
+      "Mesa",
+      "EVH",
+      "Friedman",
+      "VOX",
+      "Bassman",
+      "Custom"
+    ],
+    "tone_type": [
+      "None",
+      "Fender",
+      "Marshall"
+    ],
+    "ir_points": [
+      "256",
+      "512",
+      "1024",
+      "2048",
+      "4096",
+      "8192"
+    ],
+    "ir_type": [
+      "FIR",
+      "FFT",
+      "Part Conv"
+    ],
+    "Mode": [
+      "Major",
+      "Minor",
+      "Harmonic Minor",
+      "Melodic Minor",
+      "Lydian",
+      "Mixolydian",
+      "Phrygian",
+      "Dorian",
+      "Locrian"
+    ],
+    "Scale": [
+      "C",
+      "C#",
+      "D",
+      "D#",
+      "E",
+      "F",
+      "F#",
+      "G",
+      "G#",
+      "A",
+      "A#",
+      "B"
+    ],
+    "dist_type": [
+      "Exp",
+      "Soft",
+      "Hard",
+      "High Gain",
+      "Fuzz",
+      "Assymetric",
+      "Multi Stage",
+      "Tube Amp",
+      "BitCrunch"
+    ],
+    "delay_type": [
+      "Digital",
+      "Echo",
+      "Tape",
+      "Multi",
+      "Modulated",
+      "PingPong",
+      "Ducking"
+    ],
+    "dist_brand": [
+      "Rat",
+      "DS2",
+      "MetalZone",
+      "MXR+",
+      "BigMuff"
+    ],
+    "ovrd_brand": [
+      "TubeScreamer",
+      "Blues Driver",
+      "Klon",
+      "ODR1"
+    ],
+    "eq_type": [
+      "Neutral",
+      "Mid Scoop",
+      "Mid Boost",
+      "Bass Boost",
+      "Treble Boost"
+    ],
+    "eq_freq_scale": [
+      "100%",
+      "75%",
+      "50%",
+      "125%",
+      "150%"
+    ],
+    "division": [
+      "1/32",
+      "1/16",
+      "1/16t",
+      "1/16d",
+      "1/8",
+      "1/8t",
+      "1/8d",
+      "1/4",
+      "1/4t",
+      "1/4d",
+      "1/2",
+      "1"
+    ]
+  }
+};
+
+        // Main Application
+        const app = {
+            bleDevice: null,
+            bleCharacteristic: null,
+            connected: false,
+            currentEffect: null,
+            drumPattern: Array(9).fill(null).map(() => Array(16).fill(0)),
+            audioData: null,
+            sampleRate: null,
+            effectStates: {},
+            
+            init() {
+                // Initialize parameter storage for all effects
+                this.effectParams = {};
+                CONFIG.tabs.forEach((_, idx) => {
+                    this.effectParams[idx] = {};
+                });
+                
+                // Initialize EQ state storage
+                this.eqState = null;
+                
+                this.setupTabs();
+                this.setupEffectsGrid();
+                this.setupDrumGrid();
+                this.setupKnobs();
+                this.setupFileUpload();
+                this.setupBLE();
+                this.updateStatus("Ready - Click Connect BLE to pair device");
+            },
+            
+            setupTabs() {
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        const tabName = tab.dataset.tab;
+                        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                        tab.classList.add('active');
+                        document.getElementById(tabName + '-tab').classList.add('active');
+                    });
+                });
+            },
+            
+            setupEffectsGrid() {
+                const grid = document.getElementById('effectsGrid');
+                CONFIG.tabs.forEach((effect, idx) => {
+                    const btn = document.createElement('div');
+                    btn.className = 'effect-btn';
+                    btn.textContent = effect.title;
+                    btn.dataset.index = idx;
+                    
+                    this.effectStates[idx] = { enabled: false, selected: false };
+                    
+                    let clickTimeout = null;
+                    let clickCount = 0;
+                    
+                    btn.addEventListener('click', (e) => {
+                        clickCount++;
+                        
+                        if (clickCount === 1) {
+                            clickTimeout = setTimeout(() => {
+                                // Single click - select effect
+                                this.selectEffect(idx);
+                                clickCount = 0;
+                            }, 250);
+                        } else if (clickCount === 2) {
+                            // Double click - toggle enable
+                            clearTimeout(clickTimeout);
+                            this.toggleEffectEnabled(idx);
+                            clickCount = 0;
+                        }
+                    });
+                    
+                    grid.appendChild(btn);
+                });
+            },
+            
+            selectEffect(idx) {
+                this.currentEffect = idx;
+                
+                // Update selection state
+                Object.keys(this.effectStates).forEach(i => {
+                    this.effectStates[i].selected = (parseInt(i) === idx);
+                });
+                
+                this.updateEffectButtons();
+                this.showEffectControls(idx);
+            },
+            
+            toggleEffectEnabled(idx) {
+                this.effectStates[idx].enabled = !this.effectStates[idx].enabled;
+                this.updateEffectButtons();
+                this.sendEffectData(idx);
+            },
+            
+            updateEffectButtons() {
+                document.querySelectorAll('.effect-btn').forEach((btn, i) => {
+                    const state = this.effectStates[i];
+                    btn.classList.toggle('selected', state.selected);
+                    btn.classList.toggle('enabled', state.enabled);
+                });
+            },
+            
+            showEffectControls(idx) {
+                const effect = CONFIG.tabs[idx];
+                const controls = document.getElementById('effectControls');
+                
+                // Restore saved parameter values if they exist
+                const savedParams = this.effectParams[idx] || {};
+                
+                // Special case for Equalizer - show IIR designer
+                if (effect.title === 'Equalizer') {
+                    controls.innerHTML = `
+                    <div class="iir-designer">
+                        <div class="effect-title">IIR Parametric Equalizer - 12 Bands</div>
+                        <div style="text-align: center; margin-bottom: 15px;">
+                            <div class="knob-container">
+                                <div class="knob" id="eqQKnob"></div>
+                                <div class="knob-label">Q Factor</div>
+                            </div>
+                        </div>
+                        <canvas class="iir-canvas" id="iirCanvas"></canvas>
+                        <div class="iir-controls">
+                            <button onclick="app.iirDesigner.reset()">Reset EQ</button>
+                            <button onclick="app.iirDesigner.sendCoefficients()">Send Coefficients</button>
+                        </div>
+                    </div>
+                    `;
+                    
+                    // Create Q knob
+                    const qKnob = new Knob(document.getElementById('eqQKnob'), 0.1, 10, 1.41);
+                    
+                    this.iirDesigner = new IIRDesigner(document.getElementById('iirCanvas'), qKnob);
+                    
+                    // Restore saved EQ state if exists
+                    if (this.eqState) {
+                        this.iirDesigner.points = JSON.parse(JSON.stringify(this.eqState));
+                        this.iirDesigner.draw();
+                    }
+                    return;
+                }
+                
+                controls.innerHTML = `
+                    <div class="effect-controls">
+                        <div class="effect-title">${effect.title}</div>
+                        ${effect.params.checkbox ? `
+                            <label class="checkbox">
+                                <input type="checkbox" id="effectEnable" ${this.effectStates[idx].enabled ? 'checked' : ''}>
+                                <span>Enable ${effect.title}</span>
+                            </label>
+                        ` : ''}
+                        ${effect.params.dropdowns && effect.params.dropdowns.length > 0 ? `
+                            <div class="dropdowns-grid">
+                                ${effect.params.dropdowns.map(dropdown => `
+                                    <div>
+                                        <label class="control-label">${dropdown}</label>
+                                        <select id="dropdown_${dropdown}">
+                                            ${(CONFIG.dropdowns[dropdown] || []).map(opt => 
+                                                `<option>${opt}</option>`
+                                            ).join('')}
+                                        </select>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                        <div class="knobs-grid" id="effectKnobs"></div>
+                        <button onclick="app.sendEffectData(${idx})">Send ${effect.title}</button>
+                    </div>
+                `;
+                
+                const enableCheckbox = document.getElementById('effectEnable');
+                if (enableCheckbox) {
+                    enableCheckbox.addEventListener('change', () => {
+                        this.effectStates[idx].enabled = enableCheckbox.checked;
+                        this.updateEffectButtons();
+                    });
+                }
+                
+                const knobsContainer = document.getElementById('effectKnobs');
+                if (effect.params.knobs) {
+                    effect.params.knobs.forEach((label, i) => {
+                        const container = document.createElement('div');
+                        container.className = 'knob-container';
+                        container.innerHTML = `
+                            <div class="knob" id="effectKnob${i}"></div>
+                            <div class="knob-label">${label}</div>
+                        `;
+                        knobsContainer.appendChild(container);
+                        
+                        // Restore saved value or use default
+                        const savedValue = savedParams[`knob${i}`] !== undefined ? savedParams[`knob${i}`] : 127;
+                        const knob = new Knob(document.getElementById(`effectKnob${i}`), 0, 255, savedValue);
+                        
+                        // Save parameter on change
+                        knob.onchange = () => {
+                            this.effectParams[idx][`knob${i}`] = knob.value;
+                        };
+                    });
+                }
+                
+                // Restore dropdown values
+                if (effect.params.dropdowns) {
+                    effect.params.dropdowns.forEach((dropdown, i) => {
+                        const select = document.getElementById(`dropdown_${dropdown}`);
+                        if (select && savedParams[`dropdown${i}`] !== undefined) {
+                            select.value = savedParams[`dropdown${i}`];
+                        }
+                        if (select) {
+                            select.addEventListener('change', () => {
+                                this.effectParams[idx][`dropdown${i}`] = select.value;
+                            });
+                        }
+                    });
+                }
+            },
+            
+            setupDrumGrid() {
+                const grid = document.getElementById('drumGrid');
+                const parts = ["Kick", "Snare", "HiHat", "Cymbal", "Tom1", "Tom2", "Tom3", "Perc1", "Perc2"];
+                
+                parts.forEach((part, row) => {
+                    const rowDiv = document.createElement('div');
+                    rowDiv.className = 'drum-row';
+                    
+                    const label = document.createElement('div');
+                    label.className = 'drum-label';
+                    label.textContent = part;
+                    rowDiv.appendChild(label);
+                    
+                    for (let col = 0; col < 16; col++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'drum-cell';
+                        cell.dataset.row = row;
+                        cell.dataset.col = col;
+                        
+                        // Click to toggle on/off
+                        cell.addEventListener('click', () => {
+                            if (this.drumPattern[row][col] === 0) {
+                                this.drumPattern[row][col] = 127; // Turn on at max velocity
+                            } else {
+                                this.drumPattern[row][col] = 0; // Turn off
+                            }
+                            this.updateDrumCell(cell, row, col);
+                            this.sendDrumPattern();
+                        });
+                        
+                        // Mouse wheel to adjust velocity (when active)
+                        cell.addEventListener('wheel', (e) => {
+                            if (this.drumPattern[row][col] > 0) {
+                                e.preventDefault();
+                                const delta = e.deltaY > 0 ? -5 : 5; // 5 velocity units per scroll
+                                let newVel = this.drumPattern[row][col] + delta;
+                                newVel = Math.max(1, Math.min(127, newVel)); // Keep between 1-127 when active
+                                this.drumPattern[row][col] = newVel;
+                                this.updateDrumCell(cell, row, col);
+                                this.sendDrumPattern();
+                            }
+                        }, {passive: false});
+                        
+                        // Touch support for mobile
+                        let touchStartY = 0;
+                        cell.addEventListener('touchstart', (e) => {
+                            touchStartY = e.touches[0].clientY;
+                            this.drumPattern[row][col] = this.drumPattern[row][col] ? 0 : 127;
+                            this.updateDrumCell(cell, row, col);
+                            this.sendDrumPattern();
+                        });
+                        
+                        cell.addEventListener('touchmove', (e) => {
+                            if (this.drumPattern[row][col]) {
+                                const deltaY = touchStartY - e.touches[0].clientY;
+                                const velocity = Math.max(1, Math.min(127, 64 + deltaY));
+                                this.drumPattern[row][col] = Math.round(velocity);
+                                this.updateDrumCell(cell, row, col);
+                            }
+                        });
+                        
+                        rowDiv.appendChild(cell);
+                    }
+                    grid.appendChild(rowDiv);
+                });
+            },
+            
+            updateDrumCell(cell, row, col) {
+                const velocity = this.drumPattern[row][col];
+                if (velocity > 0) {
+                    cell.classList.add('active');
+                    const bar = cell.querySelector('.velocity-bar') || document.createElement('div');
+                    bar.className = 'velocity-bar';
+                    bar.style.height = (velocity / 127 * 100) + '%';
+                    if (!cell.contains(bar)) cell.appendChild(bar);
+                } else {
+                    cell.classList.remove('active');
+                    const bar = cell.querySelector('.velocity-bar');
+                    if (bar) bar.remove();
+                }
+            },
+            
+            setupKnobs() {
+                new Knob(document.getElementById('masterKnob'), 0, 255, 127);
+                new Knob(document.getElementById('bpmKnob'), 40, 255, 127);
+                new Knob(document.getElementById('blVolKnob'), 0, 255, 127);
+                new Knob(document.getElementById('drumLevelKnob'), 0, 255, 127);
+            },
+            
+            setupFileUpload() {
+                const input = document.getElementById('fileInput');
+                input.addEventListener('change', (e) => this.loadAudioFile(e.target.files[0]));
+                
+                // Also listen for changes to irPoints select
+                const irPointsSelect = document.getElementById('irPoints');
+                irPointsSelect.addEventListener('change', () => {
+                    if (this.audioData) {
+                        this.drawSpectrum();
+                    }
+                });
+            },
+            
+            async loadAudioFile(file) {
+                if (!file) return;
+                this.updateStatus(`Loading ${file.name}...`);
+                
+                try {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                    
+                    this.audioData = audioBuffer.getChannelData(0);
+                    this.sampleRate = audioBuffer.sampleRate;
+                    
+                    this.drawWaveform();
+                    this.drawSpectrum();
+                    document.getElementById('btnSendIR').disabled = false;
+                    this.updateStatus(`Loaded ${file.name} (${this.audioData.length} samples @ ${this.sampleRate} Hz)`);
+                } catch (error) {
+                    this.updateStatus(`Error loading file: ${error.message}`);
+                }
+            },
+            
+            drawWaveform() {
+                const canvas = document.getElementById('waveformCanvas');
+                const ctx = canvas.getContext('2d');
+                const width = canvas.width = canvas.offsetWidth;
+                const height = canvas.height = canvas.offsetHeight;
+                
+                ctx.fillStyle = '#333';
+                ctx.fillRect(0, 0, width, height);
+                
+                if (!this.audioData) return;
+                
+                const step = Math.ceil(this.audioData.length / width);
+                const amp = height / 2;
+                
+                ctx.strokeStyle = '#00b0b0';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                
+                for (let i = 0; i < width; i++) {
+                    const slice = this.audioData.slice(i * step, (i + 1) * step);
+                    const min = slice.reduce((a, b) => Math.min(a, b), 1);
+                    const max = slice.reduce((a, b) => Math.max(a, b), -1);
+                    
+                    ctx.moveTo(i, (1 + min) * amp);
+                    ctx.lineTo(i, (1 + max) * amp);
+                }
+                
+                ctx.stroke();
+            },
+            
+            drawSpectrum() {
+                const canvas = document.getElementById('spectrumCanvas');
+                const ctx = canvas.getContext('2d');
+                const width = canvas.width = canvas.offsetWidth;
+                const height = canvas.height = canvas.offsetHeight;
+                
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, width, height);
+                
+                if (!this.audioData || !this.sampleRate) return;
+                
+                // Compute FFT (simplified using basic DFT for visualization)
+                const fftSize = Math.min(8192, this.audioData.length);
+                const fft = this.computeFFT(this.audioData.slice(0, fftSize));
+                
+                // Auto-scale: find max magnitude
+                const maxMag = Math.max(...fft);
+                const maxDb = 20 * Math.log10(maxMag + 1e-10);
+                const minDb = maxDb - 80; // 80dB dynamic range
+                
+                // Frequency axis: 20Hz to 20kHz (logarithmic)
+                const minFreq = 20;
+                const maxFreq = Math.min(20000, this.sampleRate / 2);
+                const nyquist = this.sampleRate / 2;
+                
+                // Draw logarithmic grid
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 1;
+                
+                // Frequency grid lines (log scale)
+                [20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000].forEach(freq => {
+                    if (freq <= maxFreq) {
+                        const t = Math.log10(freq / minFreq) / Math.log10(maxFreq / minFreq);
+                        const x = t * width;
+                        ctx.beginPath();
+                        ctx.moveTo(x, 0);
+                        ctx.lineTo(x, height);
+                        ctx.stroke();
+                    }
+                });
+                
+                // dB grid lines
+                for (let db = Math.ceil(minDb / 10) * 10; db <= maxDb; db += 10) {
+                    const dbNorm = (db - minDb) / (maxDb - minDb);
+                    const y = height - (dbNorm * height);
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(width, y);
+                    ctx.stroke();
+                }
+                
+                // Draw full FFT in green
+                ctx.strokeStyle = '#0a0';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                
+                for (let i = 0; i < width; i++) {
+                    const t = i / width;
+                    const freq = minFreq * Math.pow(maxFreq / minFreq, t);
+                    const bin = Math.floor(freq / nyquist * fft.length);
+                    
+                    if (bin < fft.length) {
+                        const magnitude = fft[bin];
+                        const db = 20 * Math.log10(magnitude + 1e-10);
+                        const dbNorm = Math.max(0, Math.min(1, (db - minDb) / (maxDb - minDb)));
+                        const y = height - (dbNorm * height);
+                        
+                        if (i === 0) ctx.moveTo(i, y);
+                        else ctx.lineTo(i, y);
+                    }
+                }
+                
+                ctx.stroke();
+                
+                // Overlay selected points count FFT in cyan
+                const selectedPoints = parseInt(document.getElementById('irPoints').value);
+                if (selectedPoints <= fft.length) {
+                    ctx.strokeStyle = '#0ff';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    
+                    const decimationFactor = Math.floor(fft.length / selectedPoints);
+                    const decimatedFFT = [];
+                    
+                    for (let i = 0; i < selectedPoints; i++) {
+                        const startIdx = i * decimationFactor;
+                        const endIdx = Math.min(startIdx + decimationFactor, fft.length);
+                        const slice = fft.slice(startIdx, endIdx);
+                        decimatedFFT.push(slice.reduce((a, b) => a + b, 0) / slice.length);
+                    }
+                    
+                    for (let i = 0; i < width; i++) {
+                        const t = i / width;
+                        const freq = minFreq * Math.pow(maxFreq / minFreq, t);
+                        const bin = Math.floor(freq / nyquist * selectedPoints);
+                        
+                        if (bin < decimatedFFT.length) {
+                            const magnitude = decimatedFFT[bin];
+                            const db = 20 * Math.log10(magnitude + 1e-10);
+                            const dbNorm = Math.max(0, Math.min(1, (db - minDb) / (maxDb - minDb)));
+                            const y = height - (dbNorm * height);
+                            
+                            if (i === 0) ctx.moveTo(i, y);
+                            else ctx.lineTo(i, y);
+                        }
+                    }
+                    
+                    ctx.stroke();
+                }
+                
+                // Draw frequency labels (log scale)
+                ctx.fillStyle = '#888';
+                ctx.font = '11px monospace';
+                const freqLabels = [20, 100, 1000, 10000];
+                freqLabels.forEach(freq => {
+                    if (freq <= maxFreq) {
+                        const t = Math.log10(freq / minFreq) / Math.log10(maxFreq / minFreq);
+                        const x = t * width;
+                        const label = freq >= 1000 ? `${freq/1000}k` : `${freq}`;
+                        ctx.fillText(label, x - 15, height - 5);
+                    }
+                });
+                
+                // dB scale (auto-scaled)
+                ctx.fillText(`${maxDb.toFixed(0)}dB`, 5, 15);
+                ctx.fillText(`${minDb.toFixed(0)}dB`, 5, height - 5);
+                
+                // Legend
+                ctx.fillStyle = '#0a0';
+                ctx.fillRect(width - 120, 10, 15, 10);
+                ctx.fillStyle = '#888';
+                ctx.fillText('Full FFT', width - 100, 20);
+                
+                ctx.fillStyle = '#0ff';
+                ctx.fillRect(width - 120, 25, 15, 10);
+                ctx.fillStyle = '#888';
+                ctx.fillText(`${selectedPoints} pts`, width - 100, 35);
+            },
+            
+            computeFFT(data) {
+                const N = data.length;
+                const magnitude = new Array(N / 2).fill(0);
+                
+                for (let k = 0; k < N / 2; k++) {
+                    let real = 0, imag = 0;
+                    for (let n = 0; n < N; n++) {
+                        const angle = -2 * Math.PI * k * n / N;
+                        real += data[n] * Math.cos(angle);
+                        imag += data[n] * Math.sin(angle);
+                    }
+                    magnitude[k] = Math.sqrt(real * real + imag * imag) / N;
+                }
+                
+                return magnitude;
+            },
+            
+            setupBLE() {
+                document.getElementById('btnConnect').addEventListener('click', () => this.connectBLE());
+            },
+            
+            async connectBLE() {
+                try {
+                    this.updateStatus('Requesting Bluetooth device...');
+                    
+                    this.bleDevice = await navigator.bluetooth.requestDevice({
+                        filters: [{namePrefix: 'JamMate'}],
+                        optionalServices: ['6e400001-b5a3-f393-e0a9-e50e24dcca9e']
+                    });
+                    
+                    this.updateStatus('Connecting...');
+                    const server = await this.bleDevice.gatt.connect();
+                    const service = await server.getPrimaryService('6e400001-b5a3-f393-e0a9-e50e24dcca9e');
+                    this.bleCharacteristic = await service.getCharacteristic('6e400002-b5a3-f393-e0a9-e50e24dcca9e');
+                    
+                    this.connected = true;
+                    document.getElementById('statusLed').classList.add('connected');
+                    document.getElementById('btnConnect').textContent = 'Disconnect';
+                    document.getElementById('btnConnect').onclick = () => this.disconnectBLE();
+                    this.updateStatus(`Connected to ${this.bleDevice.name}`);
+                } catch (error) {
+                    this.updateStatus(`Connection failed: ${error.message}`);
+                    console.error('BLE Error:', error);
+                }
+            },
+            
+            disconnectBLE() {
+                if (this.bleDevice && this.bleDevice.gatt.connected) {
+                    this.bleDevice.gatt.disconnect();
+                }
+                this.connected = false;
+                document.getElementById('statusLed').classList.remove('connected');
+                document.getElementById('btnConnect').textContent = 'Connect BLE';
+                document.getElementById('btnConnect').onclick = () => this.connectBLE();
+                this.updateStatus('Disconnected');
+            },
+            
+            async sendPacket(data) {
+                if (!this.connected || !this.bleCharacteristic) {
+                    this.updateStatus('Not connected to device');
+                    return;
+                }
+                
+                try {
+                    const packet = new Uint8Array(17);
+                    packet.set(data);
+                    await this.bleCharacteristic.writeValue(packet);
+                    this.updateStatus('Data sent successfully');
+                } catch (error) {
+                    this.updateStatus(`Send error: ${error.message}`);
+                }
+            },
+            
+            sendEffectData(idx) {
+                const effect = CONFIG.tabs[idx];
+                const data = new Uint8Array(17);
+                
+                // Header (4 bytes)
+                const shortName = effect.short_name.padEnd(4, '\0');
+                for (let i = 0; i < 4; i++) {
+                    data[i] = shortName.charCodeAt(i);
+                }
+                
+                // Enable (1 byte)
+                const enableCheckbox = document.getElementById('effectEnable');
+                data[4] = this.effectStates[idx].enabled ? 1 : 0;
+                
+                // Knob values
+                const knobs = effect.params.knobs || [];
+                for (let i = 0; i < Math.min(knobs.length, 10); i++) {
+                    const knobEl = document.getElementById(`effectKnob${i}`);
+                    if (knobEl && knobEl.knob) {
+                        data[5 + i] = Math.round(knobEl.knob.value);
+                    }
+                }
+                
+                this.sendPacket(data);
+                this.updateStatus(`Sent ${effect.title} settings`);
+            },
+            
+            sendDrumPattern() {
+                const data = new Uint8Array(17);
+                data.set([0x44, 0x52, 0x4D, 0x50]); // "DRMP"
+                
+                let kick = 0, snare = 0, hihat = 0;
+                for (let i = 0; i < 16; i++) {
+                    if (this.drumPattern[0][i]) kick |= (1 << i);
+                    if (this.drumPattern[1][i]) snare |= (1 << i);
+                    if (this.drumPattern[2][i]) hihat |= (1 << i);
+                }
+                
+                data[11] = snare & 0xFF;
+                data[12] = (snare >> 8) & 0xFF;
+                data[13] = hihat & 0xFF;
+                data[14] = (hihat >> 8) & 0xFF;
+                data[15] = kick & 0xFF;
+                data[16] = (kick >> 8) & 0xFF;
+                
+                this.sendPacket(data);
+            },
+            
+            updateStatus(message) {
+                document.getElementById('statusMessage').textContent = message;
+                console.log('Status:', message);
+            },
+            
+            savePreset() {
+                const preset = {
+                    bank: document.getElementById('presetBank').value,
+                    num: document.getElementById('presetNum').value,
+                    effectStates: this.effectStates,
+                    drumPattern: this.drumPattern
+                };
+                localStorage.setItem('jammate_preset', JSON.stringify(preset));
+                this.updateStatus('Preset saved to browser storage');
+            },
+            
+            loadPreset() {
+                const preset = JSON.parse(localStorage.getItem('jammate_preset'));
+                if (preset) {
+                    document.getElementById('presetBank').value = preset.bank || 'Clean';
+                    document.getElementById('presetNum').value = preset.num || '1';
+                    if (preset.effectStates) {
+                        this.effectStates = preset.effectStates;
+                        this.updateEffectButtons();
+                    }
+                    if (preset.drumPattern) {
+                        this.drumPattern = preset.drumPattern;
+                    }
+                    this.updateStatus('Preset loaded from browser storage');
+                } else {
+                    this.updateStatus('No saved preset found');
+                }
+            },
+            
+            exportConfig() {
+                const config = {
+                    presets: localStorage.getItem('jammate_preset'),
+                    drumPattern: this.drumPattern,
+                    effectStates: this.effectStates
+                };
+                const blob = new Blob([JSON.stringify(config, null, 2)], {type: 'application/json'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'jammate_config.json';
+                a.click();
+                URL.revokeObjectURL(url);
+                this.updateStatus('Configuration exported');
+            },
+            
+            importConfig() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                input.onchange = async (e) => {
+                    const file = e.target.files[0];
+                    const text = await file.text();
+                    const config = JSON.parse(text);
+                    if (config.presets) localStorage.setItem('jammate_preset', config.presets);
+                    if (config.drumPattern) this.drumPattern = config.drumPattern;
+                    if (config.effectStates) {
+                        this.effectStates = config.effectStates;
+                        this.updateEffectButtons();
+                    }
+                    this.updateStatus('Configuration imported');
+                };
+                input.click();
+            },
+            
+            async searchYouTube() {
+                const query = document.getElementById('youtubeSearchInput').value.trim();
+                if (!query) {
+                    this.updateStatus('Please enter a search query');
+                    return;
+                }
+                
+                this.updateStatus('Searching YouTube...');
+                const resultsDiv = document.getElementById('youtubeResults');
+                resultsDiv.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--color-text-secondary);">Searching for "' + query + '"...</div>';
+                
+                // Use YouTube's oEmbed API (no API key required)
+                // This is a simplified approach - shows sample results
+                // In production, you'd use YouTube Data API with proper key
+                const sampleVideos = [
+                    { id: 'dQw4w9WgXcQ', title: 'Sample Video 1', thumbnail: 'https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg' },
+                    { id: 'jNQXAC9IVRw', title: 'Sample Video 2', thumbnail: 'https://img.youtube.com/vi/jNQXAC9IVRw/mqdefault.jpg' }
+                ];
+                
+                // Display note about YouTube search
+                resultsDiv.innerHTML = `
+                    <div style="grid-column: 1/-1; padding: 20px; background: var(--color-bg-elevated); border-radius: 10px; border: 2px solid var(--color-border);">
+                        <p style="margin-bottom: 10px;"><strong>YouTube Video Player</strong></p>
+                        <p style="color: var(--color-text-secondary); margin-bottom: 15px;">Enter a YouTube video ID or URL below to play backing tracks.</p>
+                        <div style="display: flex; gap: 10px;">
+                            <input 
+                                type="text" 
+                                id="youtubeVideoId" 
+                                placeholder="Video ID (e.g., dQw4w9WgXcQ) or full URL"
+                                style="flex: 1; padding: 10px; background: var(--color-bg-surface); color: var(--color-text-primary); border: 2px solid var(--color-border); border-radius: 5px;"
+                            >
+                            <button onclick="app.playYouTubeVideo()">▶ Play</button>
+                        </div>
+                        <p style="margin-top: 15px; font-size: 12px; color: var(--color-text-secondary);">
+                            💡 Tip: Find backing tracks on YouTube, copy the video ID from the URL (the part after "v="), and paste it here.
+                        </p>
+                    </div>
+                `;
+                
+                this.updateStatus('Enter a video ID to play');
+            },
+            
+            playYouTubeVideo() {
+                let input = document.getElementById('youtubeVideoId').value.trim();
+                if (!input) {
+                    this.updateStatus('Please enter a video ID or URL');
+                    return;
+                }
+                
+                // Extract video ID from various YouTube URL formats
+                let videoId = input;
+                
+                // Handle full URLs
+                if (input.includes('youtube.com/watch?v=')) {
+                    videoId = input.split('v=')[1].split('&')[0];
+                } else if (input.includes('youtu.be/')) {
+                    videoId = input.split('youtu.be/')[1].split('?')[0];
+                } else if (input.includes('youtube.com/embed/')) {
+                    videoId = input.split('embed/')[1].split('?')[0];
+                }
+                
+                // Clean up any remaining parameters
+                videoId = videoId.split('&')[0].split('?')[0];
+                
+                if (videoId && videoId.length === 11) {
+                    const playerDiv = document.getElementById('youtubePlayer');
+                    const iframe = document.getElementById('youtubeFrame');
+                    
+                    iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+                    playerDiv.style.display = 'block';
+                    
+                    // Scroll to player
+                    playerDiv.scrollIntoView({ behavior: 'smooth' });
+                    
+                    this.updateStatus(`Playing video: ${videoId}`);
+                } else {
+                    this.updateStatus('Invalid video ID format. Should be 11 characters.');
+                }
+            },
+            
+            closeYouTubePlayer() {
+                const playerDiv = document.getElementById('youtubePlayer');
+                const iframe = document.getElementById('youtubeFrame');
+                
+                iframe.src = '';
+                playerDiv.style.display = 'none';
+                
+                this.updateStatus('YouTube player closed');
+            }
+        };
+        
+        // Knob Widget
+        class Knob {
+            constructor(element, min = 0, max = 100, value = 50) {
+                this.element = element;
+                this.min = min;
+                this.max = max;
+                this.value = value;
+                this.isDragging = false;
+                this.startY = 0;
+                this.startValue = 0;
+                this.onchange = null;
+                
+                element.knob = this;
+                this.render();
+                this.bindEvents();
+            }
+            
+            render() {
+                const canvas = document.createElement('canvas');
+                canvas.className = 'knob-canvas';
+                canvas.width = 90;
+                canvas.height = 90;
+                this.element.innerHTML = '';
+                this.element.appendChild(canvas);
+                
+                this.canvas = canvas;
+                this.draw();
+            }
+            
+            draw() {
+                const ctx = this.canvas.getContext('2d');
+                const w = this.canvas.width;
+                const h = this.canvas.height;
+                const cx = w / 2;
+                const cy = h / 2;
+                const r = 35;
+                
+                ctx.clearRect(0, 0, w, h);
+                
+                // Background circle
+                const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+                grad.addColorStop(0, '#666');
+                grad.addColorStop(1, '#333');
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.arc(cx, cy, r, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Track arc
+                ctx.strokeStyle = '#222';
+                ctx.lineWidth = 6;
+                ctx.beginPath();
+                ctx.arc(cx, cy, r - 8, 0.75 * Math.PI, 2.25 * Math.PI);
+                ctx.stroke();
+                
+                // Value arc
+                const angle = 0.75 * Math.PI + ((this.value - this.min) / (this.max - this.min)) * 1.5 * Math.PI;
+                ctx.strokeStyle = '#00b0b0';
+                ctx.lineWidth = 6;
+                ctx.beginPath();
+                ctx.arc(cx, cy, r - 8, 0.75 * Math.PI, angle);
+                ctx.stroke();
+                
+                // Needle indicator
+                const needleAngle = angle;
+                const needleLength = r - 15;
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(
+                    cx + Math.cos(needleAngle) * needleLength,
+                    cy + Math.sin(needleAngle) * needleLength
+                );
+                ctx.stroke();
+                
+                // Center dot
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(cx, cy, 5, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Value text in center - show 1 decimal place for Q knob (0.1-10 range)
+                ctx.fillStyle = '#ff00ff';
+                ctx.font = 'bold 16px monospace';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                const displayValue = (this.max <= 10) ? this.value.toFixed(1) : Math.round(this.value).toString();
+                ctx.fillText(displayValue, cx, cy);
+            }
+            
+            bindEvents() {
+                const onStart = (e) => {
+                    this.isDragging = true;
+                    this.startY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+                    this.startValue = this.value;
+                    e.preventDefault();
+                };
+                
+                const onMove = (e) => {
+                    if (!this.isDragging) return;
+                    const currentY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+                    const deltaY = this.startY - currentY;
+                    const sensitivity = (this.max <= 10) ? 0.01 : 0.5; // Finer control for Q knob
+                    const newValue = this.startValue + deltaY * sensitivity;
+                    this.value = Math.max(this.min, Math.min(this.max, newValue));
+                    
+                    // Snap to 0.1 increments for Q knob (0.1-10 range)
+                    if (this.max <= 10) {
+                        this.value = Math.round(this.value * 10) / 10;
+                    }
+                    
+                    this.draw();
+                    if (this.onchange) this.onchange();
+                    e.preventDefault();
+                };
+                
+                const onEnd = () => {
+                    this.isDragging = false;
+                };
+                
+                this.element.addEventListener('mousedown', onStart);
+                this.element.addEventListener('touchstart', onStart, {passive: false});
+                document.addEventListener('mousemove', onMove);
+                document.addEventListener('touchmove', onMove, {passive: false});
+                document.addEventListener('mouseup', onEnd);
+                document.addEventListener('touchend', onEnd);
+            }
+        }
+        
+        // IIR Designer
+        class IIRDesigner {
+            constructor(canvas, qKnob) {
+                this.canvas = canvas;
+                this.ctx = canvas.getContext('2d');
+                this.width = canvas.width = canvas.offsetWidth;
+                this.height = canvas.height = canvas.offsetHeight;
+                this.qKnob = qKnob;
+                this.selectedIndex = null;
+                
+                // Setup Q knob change handler
+                if (this.qKnob) {
+                    this.qKnob.onchange = () => {
+                        if (this.selectedIndex !== null) {
+                            this.points[this.selectedIndex].q = this.qKnob.value;
+                            this.saveState();
+                            this.draw();
+                        }
+                    };
+                }
+                
+                this.points = [
+                    { freq: 30, gain: 0, enabled: true, type: 'hpf', color: '#0f0', q: 0.707 },
+                    { freq: 60, gain: 0, enabled: true, type: 'peak', color: '#f00', q: 1.41 },
+                    { freq: 120, gain: 0, enabled: true, type: 'peak', color: '#f00', q: 1.41 },
+                    { freq: 250, gain: 0, enabled: true, type: 'peak', color: '#f00', q: 1.41 },
+                    { freq: 500, gain: 0, enabled: true, type: 'peak', color: '#f00', q: 1.41 },
+                    { freq: 1000, gain: 0, enabled: true, type: 'peak', color: '#f00', q: 1.41 },
+                    { freq: 2000, gain: 0, enabled: true, type: 'peak', color: '#f00', q: 1.41 },
+                    { freq: 4000, gain: 0, enabled: true, type: 'peak', color: '#f00', q: 1.41 },
+                    { freq: 8000, gain: 0, enabled: true, type: 'peak', color: '#f00', q: 1.41 },
+                    { freq: 12000, gain: 0, enabled: true, type: 'peak', color: '#f00', q: 1.41 },
+                    { freq: 16000, gain: 0, enabled: true, type: 'peak', color: '#f00', q: 1.41 },
+                    { freq: 18000, gain: 0, enabled: true, type: 'lpf', color: '#00f', q: 0.707 }
+                ];
+                
+                this.dragging = null;
+                this.hoverIndex = null;
+                this.bindEvents();
+                this.draw();
+            }
+            
+            bindEvents() {
+                const getPos = (e) => {
+                    const rect = this.canvas.getBoundingClientRect();
+                    const x = (e.type.includes('touch') ? e.touches[0].clientX : e.clientX) - rect.left;
+                    const y = (e.type.includes('touch') ? e.touches[0].clientY : e.clientY) - rect.top;
+                    return { x, y };
+                };
+                
+                // Track hover state for mouse wheel Q adjustment
+                this.canvas.addEventListener('mousemove', (e) => {
+                    const pos = getPos(e);
+                    const hoverIdx = this.findPoint(pos.x, pos.y);
+                    
+                    if (this.dragging !== null && this.points[this.dragging].enabled) {
+                        this.updatePoint(this.dragging, pos.x, pos.y);
+                    } else {
+                        this.hoverIndex = hoverIdx;
+                    }
+                });
+                
+                // Mouse wheel for Q adjustment on hovered point (0.1 increments)
+                this.canvas.addEventListener('wheel', (e) => {
+                    if (this.hoverIndex !== null && this.points[this.hoverIndex].enabled) {
+                        e.preventDefault();
+                        const delta = e.deltaY > 0 ? -0.1 : 0.1;
+                        let newQ = this.points[this.hoverIndex].q + delta;
+                        newQ = Math.round(newQ * 10) / 10; // Snap to 0.1 increments
+                        this.points[this.hoverIndex].q = Math.max(0.1, Math.min(10, newQ));
+                        
+                        // Update Q knob if this is the selected point
+                        if (this.selectedIndex === this.hoverIndex && this.qKnob) {
+                            this.qKnob.value = this.points[this.hoverIndex].q;
+                            this.qKnob.draw();
+                        }
+                        
+                        this.saveState();
+                        this.draw();
+                    }
+                }, {passive: false});
+                
+                // Double-click detection
+                let lastClickTime = 0;
+                let lastClickIndex = null;
+                
+                this.canvas.addEventListener('mousedown', (e) => {
+                    const pos = getPos(e);
+                    const idx = this.findPoint(pos.x, pos.y);
+                    const currentTime = Date.now();
+                    
+                    if (idx !== null && lastClickIndex === idx && (currentTime - lastClickTime) < 300) {
+                        // Double-click detected - toggle enabled
+                        this.points[idx].enabled = !this.points[idx].enabled;
+                        this.saveState();
+                        this.draw();
+                        lastClickTime = 0;
+                        lastClickIndex = null;
+                    } else {
+                        // Single click - select point and prepare for drag
+                        if (idx !== null) {
+                            this.selectedIndex = idx;
+                            if (this.qKnob) {
+                                this.qKnob.value = this.points[idx].q;
+                                this.qKnob.draw();
+                            }
+                            if (this.points[idx].enabled) {
+                                this.dragging = idx;
+                            }
+                            this.draw();
+                        }
+                        lastClickTime = currentTime;
+                        lastClickIndex = idx;
+                    }
+                });
+                
+                this.canvas.addEventListener('touchstart', (e) => {
+                    const pos = getPos(e);
+                    const idx = this.findPoint(pos.x, pos.y);
+                    const currentTime = Date.now();
+                    
+                    if (idx !== null && lastClickIndex === idx && (currentTime - lastClickTime) < 300) {
+                        // Double-tap detected - toggle enabled
+                        this.points[idx].enabled = !this.points[idx].enabled;
+                        this.saveState();
+                        this.draw();
+                        lastClickTime = 0;
+                        lastClickIndex = null;
+                    } else {
+                        // Single tap - select point and prepare for drag
+                        if (idx !== null) {
+                            this.selectedIndex = idx;
+                            if (this.qKnob) {
+                                this.qKnob.value = this.points[idx].q;
+                                this.qKnob.draw();
+                            }
+                            if (this.points[idx].enabled) {
+                                this.dragging = idx;
+                            }
+                            this.draw();
+                        }
+                        lastClickTime = currentTime;
+                        lastClickIndex = idx;
+                    }
+                    e.preventDefault();
+                }, {passive: false});
+                
+                this.canvas.addEventListener('touchmove', (e) => {
+                    if (this.dragging !== null && this.points[this.dragging].enabled) {
+                        const pos = getPos(e);
+                        this.updatePoint(this.dragging, pos.x, pos.y);
+                        e.preventDefault();
+                    }
+                }, {passive: false});
+                
+                const endDrag = () => {
+                    this.dragging = null;
+                };
+                
+                this.canvas.addEventListener('mouseup', endDrag);
+                this.canvas.addEventListener('touchend', endDrag);
+            }
+            
+            findPoint(x, y) {
+                for (let i = 0; i < this.points.length; i++) {
+                    const px = this.freqToX(this.points[i].freq);
+                    const py = this.gainToY(this.points[i].gain);
+                    const dist = Math.sqrt((x - px) ** 2 + (y - py) ** 2);
+                    if (dist < 15) return i;
+                }
+                return null;
+            }
+            
+            updatePoint(idx, x, y) {
+                const pt = this.points[idx];
+                
+                // Constrain based on filter type
+                if (pt.type === 'hpf') {
+                    pt.freq = Math.max(20, Math.min(500, this.xToFreq(x)));
+                    pt.gain = 0; // HPF has no gain
+                } else if (pt.type === 'lpf') {
+                    pt.freq = Math.max(5000, Math.min(20000, this.xToFreq(x)));
+                    pt.gain = 0; // LPF has no gain
+                } else {
+                    pt.freq = Math.max(60, Math.min(15000, this.xToFreq(x)));
+                    pt.gain = Math.max(-30, Math.min(20, this.yToGain(y)));
+                }
+                
+                // Save EQ state to app
+                this.saveState();
+                this.draw();
+            }
+            
+            freqToX(freq) {
+                const logMin = Math.log10(20);
+                const logMax = Math.log10(20000);
+                const t = (Math.log10(freq) - logMin) / (logMax - logMin);
+                return t * this.width;
+            }
+            
+            xToFreq(x) {
+                const logMin = Math.log10(20);
+                const logMax = Math.log10(20000);
+                const t = x / this.width;
+                return Math.pow(10, logMin + t * (logMax - logMin));
+            }
+            
+            gainToY(gain) {
+                const t = (20 - gain) / 40;
+                return t * this.height;
+            }
+            
+            yToGain(y) {
+                const t = y / this.height;
+                return 20 - t * 40;
+            }
+            
+            draw() {
+                this.ctx.fillStyle = '#000';
+                this.ctx.fillRect(0, 0, this.width, this.height);
+                
+                // Grid
+                this.ctx.strokeStyle = '#333';
+                this.ctx.lineWidth = 1;
+                
+                // Frequency grid (log scale)
+                [20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000].forEach(freq => {
+                    const x = this.freqToX(freq);
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x, 0);
+                    this.ctx.lineTo(x, this.height);
+                    this.ctx.stroke();
+                    
+                    // Frequency labels
+                    this.ctx.fillStyle = '#666';
+                    this.ctx.font = '10px monospace';
+                    const label = freq >= 1000 ? `${freq/1000}k` : `${freq}`;
+                    this.ctx.fillText(label, x + 3, this.height - 5);
+                });
+                
+                // Gain grid
+                for (let db = -20; db <= 20; db += 5) {
+                    const y = this.gainToY(db);
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, y);
+                    this.ctx.lineTo(this.width, y);
+                    this.ctx.stroke();
+                    
+                    // dB labels
+                    this.ctx.fillStyle = '#666';
+                    this.ctx.font = '10px monospace';
+                    this.ctx.fillText(`${db}dB`, 5, y - 3);
+                }
+                
+                // 0dB line
+                this.ctx.strokeStyle = '#666';
+                this.ctx.lineWidth = 2;
+                const y0 = this.gainToY(0);
+                this.ctx.beginPath();
+                this.ctx.moveTo(0, y0);
+                this.ctx.lineTo(this.width, y0);
+                this.ctx.stroke();
+                
+                // Frequency response curve using proper biquad calculation
+                this.ctx.strokeStyle = '#0f0';
+                this.ctx.lineWidth = 3;
+                this.ctx.beginPath();
+                
+                const fs = 48000;
+                const numPoints = this.width;
+                
+                for (let x = 0; x < numPoints; x++) {
+                    const freq = this.xToFreq(x);
+                    const w = 2 * Math.PI * freq / fs;
+                    let totalMag = 1.0;
+                    
+                    this.points.forEach(pt => {
+                        if (pt.enabled) {
+                            const w0 = 2 * Math.PI * pt.freq / fs;
+                            const A = Math.pow(10, pt.gain / 40.0);
+                            const alpha = Math.sin(w0) / (2 * pt.q);
+                            const cosw0 = Math.cos(w0);
+                            
+                            let b0, b1, b2, a0, a1, a2;
+                            
+                            if (pt.type === 'peak') {
+                                b0 = 1 + alpha * A;
+                                b1 = -2 * cosw0;
+                                b2 = 1 - alpha * A;
+                                a0 = 1 + alpha / A;
+                                a1 = -2 * cosw0;
+                                a2 = 1 - alpha / A;
+                            } else if (pt.type === 'hpf') {
+                                // Butterworth HPF
+                                const sinw0 = Math.sin(w0);
+                                b0 = (1 + cosw0) / 2;
+                                b1 = -(1 + cosw0);
+                                b2 = (1 + cosw0) / 2;
+                                a0 = 1 + alpha;
+                                a1 = -2 * cosw0;
+                                a2 = 1 - alpha;
+                            } else if (pt.type === 'lpf') {
+                                // Butterworth LPF
+                                const sinw0 = Math.sin(w0);
+                                b0 = (1 - cosw0) / 2;
+                                b1 = 1 - cosw0;
+                                b2 = (1 - cosw0) / 2;
+                                a0 = 1 + alpha;
+                                a1 = -2 * cosw0;
+                                a2 = 1 - alpha;
+                            }
+                            
+                            // Normalize coefficients
+                            b0 /= a0;
+                            b1 /= a0;
+                            b2 /= a0;
+                            a1 /= a0;
+                            a2 /= a0;
+                            
+                            // Compute frequency response H(e^jw)
+                            const ejw = { real: Math.cos(w), imag: Math.sin(w) };
+                            const ejw2 = { real: Math.cos(2*w), imag: Math.sin(2*w) };
+                            
+                            // Numerator: b0 + b1*e^(-jw) + b2*e^(-j2w)
+                            const numReal = b0 + b1 * ejw.real + b2 * ejw2.real;
+                            const numImag = -b1 * ejw.imag - b2 * ejw2.imag;
+                            
+                            // Denominator: 1 + a1*e^(-jw) + a2*e^(-j2w)
+                            const denReal = 1 + a1 * ejw.real + a2 * ejw2.real;
+                            const denImag = -a1 * ejw.imag - a2 * ejw2.imag;
+                            
+                            // H = num / den
+                            const denMagSq = denReal * denReal + denImag * denImag;
+                            const hReal = (numReal * denReal + numImag * denImag) / denMagSq;
+                            const hImag = (numImag * denReal - numReal * denImag) / denMagSq;
+                            const mag = Math.sqrt(hReal * hReal + hImag * hImag);
+                            
+                            totalMag *= mag;
+                        }
+                    });
+                    
+                    const totalGainDb = 20 * Math.log10(totalMag + 1e-10);
+                    const y = this.gainToY(totalGainDb);
+                    if (x === 0) this.ctx.moveTo(x, y);
+                    else this.ctx.lineTo(x, y);
+                }
+                
+                this.ctx.stroke();
+                
+                // Draw points
+                this.points.forEach((pt, idx) => {
+                    const x = this.freqToX(pt.freq);
+                    const y = this.gainToY(pt.gain);
+                    
+                    // Highlight hovered or selected point
+                    const isHovered = (idx === this.hoverIndex);
+                    const isSelected = (idx === this.selectedIndex);
+                    
+                    this.ctx.fillStyle = pt.enabled ? pt.color : '#555';
+                    this.ctx.beginPath();
+                    this.ctx.arc(x, y, (isHovered || isSelected) ? 10 : 8, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    
+                    this.ctx.strokeStyle = isSelected ? '#f0f' : (isHovered ? '#ff0' : '#fff');
+                    this.ctx.lineWidth = (isHovered || isSelected) ? 3 : 2;
+                    this.ctx.stroke();
+                    
+                    // Label
+                    this.ctx.fillStyle = pt.enabled ? '#0f0' : '#888';
+                    this.ctx.font = '10px monospace';
+                    this.ctx.fillText(`${Math.round(pt.freq)}Hz`, x + 12, y - 8);
+                    if (pt.type !== 'hpf' && pt.type !== 'lpf') {
+                        this.ctx.fillText(`${pt.gain.toFixed(1)}dB`, x + 12, y + 4);
+                    }
+                    this.ctx.fillText(`Q:${pt.q.toFixed(2)}`, x + 12, y + 14);
+                });
+            }
+            
+            saveState() {
+                // Save current EQ state to app for persistence
+                if (app) {
+                    app.eqState = JSON.parse(JSON.stringify(this.points));
+                }
+            }
+            
+            reset() {
+                this.points.forEach(pt => {
+                    pt.gain = 0;
+                    pt.enabled = true;
+                    if (pt.type === 'peak') pt.q = 1.41;
+                    else pt.q = 0.707;
+                });
+                this.saveState();
+                this.draw();
+                app.updateStatus('EQ reset to flat response');
+            }
+            
+            sendCoefficients() {
+                app.updateStatus('EQ coefficients would be sent here (implementation required)');
+            }
+        }
+        
+        // Effect icon drawing function
+        app.drawEffectIcon = function(canvas, effectTitle) {
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+            const cx = w / 2;
+            const cy = h / 2;
+            
+            ctx.clearRect(0, 0, w, h);
+            
+            // Background gradient
+            const grad = ctx.createLinearGradient(0, 0, 0, h);
+            grad.addColorStop(0, 'rgba(100, 100, 120, 0.3)');
+            grad.addColorStop(1, 'rgba(50, 50, 70, 0.3)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(5, 5, w-10, h-10);
+            
+            ctx.strokeStyle = '#00b0b0';
+            ctx.fillStyle = '#00b0b0';
+            ctx.lineWidth = 2;
+            
+            switch(effectTitle) {
+                case 'Noise Gate':
+                    // Gate icon (closing barrier)
+                    ctx.strokeRect(15, 20, 30, 25);
+                    ctx.fillRect(20, 22, 5, 21);
+                    ctx.fillRect(35, 22, 5, 21);
+                    break;
+                    
+                case 'Compressor':
+                    // Compression waveform
+                    ctx.beginPath();
+                    ctx.moveTo(10, 45);
+                    ctx.lineTo(20, 35);
+                    ctx.lineTo(30, 30);
+                    ctx.lineTo(40, 27);
+                    ctx.lineTo(50, 25);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.arc(25, 32, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+                    
+                case 'Auto Wah':
+                    // Wah pedal shape
+                    ctx.beginPath();
+                    ctx.moveTo(20, 45);
+                    ctx.lineTo(15, 25);
+                    ctx.lineTo(45, 25);
+                    ctx.lineTo(40, 45);
+                    ctx.closePath();
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.arc(30, 35, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+                    
+                case 'Overdrive':
+                    // Tube screamer inspired knobs
+                    for (let i = 0; i < 3; i++) {
+                        ctx.beginPath();
+                        ctx.arc(20 + i*10, 30, 6, 0, Math.PI * 2);
+                        ctx.stroke();
+                        ctx.beginPath();
+                        ctx.moveTo(20 + i*10, 30);
+                        ctx.lineTo(20 + i*10 + 4, 26);
+                        ctx.stroke();
+                    }
+                    break;
+                    
+                case 'Distortion':
+                    // Heavy clipped waveform
+                    ctx.beginPath();
+                    ctx.moveTo(10, 30);
+                    ctx.lineTo(15, 15);
+                    ctx.lineTo(25, 15);
+                    ctx.lineTo(30, 45);
+                    ctx.lineTo(40, 45);
+                    ctx.lineTo(45, 30);
+                    ctx.stroke();
+                    break;
+                    
+                case 'Equalizer':
+                    // Graphic EQ sliders
+                    for (let i = 0; i < 5; i++) {
+                        const x = 15 + i * 8;
+                        const heights = [35, 25, 30, 20, 28];
+                        ctx.fillRect(x, heights[i], 4, 45 - heights[i]);
+                    }
+                    break;
+                    
+                case 'Harmonizer':
+                    // Musical notes
+                    ctx.beginPath();
+                    ctx.arc(20, 35, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillRect(25, 20, 2, 15);
+                    ctx.beginPath();
+                    ctx.arc(35, 30, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillRect(40, 15, 2, 15);
+                    break;
+                    
+                case 'Vibrato':
+                    // Vibrato wave
+                    ctx.beginPath();
+                    for (let x = 10; x < 50; x++) {
+                        const y = 30 + Math.sin(x * 0.5) * 8;
+                        if (x === 10) ctx.moveTo(x, y);
+                        else ctx.lineTo(x, y);
+                    }
+                    ctx.stroke();
+                    break;
+                    
+                case 'Chorus':
+                    // Multiple waves (chorus effect)
+                    for (let offset = -3; offset <= 3; offset += 3) {
+                        ctx.beginPath();
+                        for (let x = 10; x < 50; x++) {
+                            const y = 30 + Math.sin(x * 0.3 + offset * 0.5) * 5;
+                            if (x === 10) ctx.moveTo(x, y);
+                            else ctx.lineTo(x, y);
+                        }
+                        ctx.globalAlpha = 0.5;
+                        ctx.stroke();
+                    }
+                    ctx.globalAlpha = 1;
+                    break;
+                    
+                case 'Octave':
+                    // Octave up/down arrows
+                    ctx.beginPath();
+                    ctx.moveTo(30, 15);
+                    ctx.lineTo(25, 25);
+                    ctx.lineTo(35, 25);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.moveTo(30, 45);
+                    ctx.lineTo(25, 35);
+                    ctx.lineTo(35, 35);
+                    ctx.closePath();
+                    ctx.fill();
+                    break;
+                    
+                case 'Flanger':
+                    // Jet plane whoosh
+                    ctx.beginPath();
+                    ctx.arc(30, 30, 15, 0, Math.PI * 2);
+                    ctx.stroke();
+                    for (let i = 0; i < 3; i++) {
+                        ctx.beginPath();
+                        ctx.arc(30, 30, 10 + i * 3, 0, Math.PI * 2);
+                        ctx.globalAlpha = 0.3;
+                        ctx.stroke();
+                    }
+                    ctx.globalAlpha = 1;
+                    break;
+                    
+                case 'Phaser':
+                    // Phase shift circles
+                    ctx.beginPath();
+                    ctx.arc(25, 30, 8, 0, Math.PI);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.arc(35, 30, 8, Math.PI, Math.PI * 2);
+                    ctx.stroke();
+                    break;
+                    
+                case 'Tremolo':
+                    // Amplitude modulation
+                    ctx.beginPath();
+                    for (let x = 10; x < 50; x += 2) {
+                        const amp = 5 + Math.abs(Math.sin(x * 0.4)) * 15;
+                        ctx.moveTo(x, 30 - amp);
+                        ctx.lineTo(x, 30 + amp);
+                    }
+                    ctx.stroke();
+                    break;
+                    
+                case 'Amp/Cab':
+                    // Amp head with knobs
+                    ctx.strokeRect(12, 20, 36, 25);
+                    for (let i = 0; i < 4; i++) {
+                        ctx.beginPath();
+                        ctx.arc(18 + i*8, 32, 3, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+                    break;
+                    
+                case 'Delay':
+                    // Tape echo inspired
+                    ctx.beginPath();
+                    ctx.arc(30, 30, 12, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.arc(30, 30, 6, 0, Math.PI * 2);
+                    ctx.stroke();
+                    for (let i = 0; i < 4; i++) {
+                        const angle = i * Math.PI / 2;
+                        ctx.beginPath();
+                        ctx.moveTo(30 + Math.cos(angle) * 8, 30 + Math.sin(angle) * 8);
+                        ctx.lineTo(30 + Math.cos(angle) * 12, 30 + Math.sin(angle) * 12);
+                        ctx.stroke();
+                    }
+                    break;
+                    
+                case 'NAM':
+                    // Neural network
+                    for (let row = 0; row < 3; row++) {
+                        for (let col = 0; col < 3; col++) {
+                            ctx.beginPath();
+                            ctx.arc(18 + col * 12, 22 + row * 10, 2, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                    }
+                    ctx.globalAlpha = 0.3;
+                    for (let i = 0; i < 3; i++) {
+                        for (let j = 0; j < 3; j++) {
+                            ctx.beginPath();
+                            ctx.moveTo(18 + i * 12, 22);
+                            ctx.lineTo(18 + j * 12, 42);
+                            ctx.stroke();
+                        }
+                    }
+                    ctx.globalAlpha = 1;
+                    break;
+                    
+                case 'Reverb':
+                    // Spring reverb springs
+                    for (let i = 0; i < 3; i++) {
+                        ctx.beginPath();
+                        for (let x = 15; x < 45; x += 2) {
+                            const y = 25 + i * 6 + Math.sin(x * 0.5) * 2;
+                            if (x === 15) ctx.moveTo(x, y);
+                            else ctx.lineTo(x, y);
+                        }
+                        ctx.stroke();
+                    }
+                    break;
+                    
+                default:
+                    // Generic pedal icon
+                    ctx.strokeRect(15, 20, 30, 25);
+                    ctx.beginPath();
+                    ctx.arc(30, 32, 8, 0, Math.PI * 2);
+                    ctx.stroke();
+                    break;
+            }
+        };
+        
+        // Setup tab event bindings
+        document.addEventListener('DOMContentLoaded', () => {
+            const btEnableCheckbox = document.getElementById('btEnable');
+            const bleEnableCheckbox = document.getElementById('bleEnable');
+            
+            if (btEnableCheckbox) {
+                btEnableCheckbox.addEventListener('change', () => app.sendBTEnable());
+            }
+            
+            if (bleEnableCheckbox) {
+                bleEnableCheckbox.addEventListener('change', () => app.sendBLEEnable());
+            }
+        });
+        
+        // Theme toggle functionality
+        function setupTheme() {
+            const btnTheme = document.getElementById('btnTheme');
+            const body = document.body;
+            
+            if (!btnTheme) {
+                console.error('Theme button not found');
+                return;
+            }
+            
+            // Load saved theme preference
+            const savedTheme = localStorage.getItem('jammate_theme');
+            if (savedTheme === 'light') {
+                body.classList.add('light-theme');
+            }
+            
+            // Simple click handler
+            btnTheme.onclick = function() {
+                console.log('Theme button clicked!');
+                body.classList.toggle('light-theme');
+                const isLight = body.classList.contains('light-theme');
+                localStorage.setItem('jammate_theme', isLight ? 'light' : 'dark');
+                
+                console.log('Theme is now:', isLight ? 'light' : 'dark');
+                
+                if (typeof app !== 'undefined' && app.updateStatus) {
+                    app.updateStatus(isLight ? 'Switched to light theme' : 'Switched to dark theme');
+                }
+                
+                // Force redraw of any canvas elements
+                if (typeof app !== 'undefined' && app.iirDesigner) {
+                    app.iirDesigner.draw();
+                }
+                
+                // Force browser repaint
+                document.body.offsetHeight;
+            };
+            
+            console.log('Theme button setup complete');
+        }
+        
+        // Fullscreen functionality
+        function setupFullscreen() {
+            const btnFullscreen = document.getElementById('btnFullscreen');
+            
+            btnFullscreen.addEventListener('click', () => {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(err => {
+                        console.error('Error attempting to enable fullscreen:', err);
+                        app.updateStatus('Fullscreen not available');
+                    });
+                } else {
+                    document.exitFullscreen();
+                }
+            });
+            
+            document.addEventListener('fullscreenchange', () => {
+                if (document.fullscreenElement) {
+                    btnFullscreen.textContent = '⛶';
+                    app.updateStatus('Entered fullscreen mode');
+                } else {
+                    btnFullscreen.textContent = '⛶';
+                    app.updateStatus('Exited fullscreen mode');
+                }
+            });
+        }
+        
+        // Initialize app
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                app.init();
+                setupTheme();
+                setupFullscreen();
+                // Request fullscreen on load
+                setTimeout(() => {
+                    if (!document.fullscreenElement) {
+                        document.documentElement.requestFullscreen().catch(err => {
+                            console.log('Fullscreen request on load failed:', err);
+                        });
+                    }
+                }, 500);
+            });
+        } else {
+            app.init();
+            setupTheme();
+            setupFullscreen();
+            // Request fullscreen on load
+            setTimeout(() => {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(err => {
+                        console.log('Fullscreen request on load failed:', err);
+                    });
+                }
+            }, 500);
+        }
+    </script>
+</body>
+</html>
