@@ -1884,26 +1884,20 @@
             },
             
             async sendPacket(data) {
-				if (!this.connected || !this.bleCharacteristic) {
-					this.updateStatus("Not connected to device");
-					return;
-				}
-				
-				try {
-					const packet = new Uint8Array(17);
-					packet.set(data);
-					
-					// FIX: Use writeValueWithResponse for mobile compatibility
-					await this.bleCharacteristic.writeValueWithResponse(packet);
-					
-					console.log("[BLE] Sent:", Array.from(packet).slice(0, 5));
-					this.updateStatus("Data sent successfully");
-				} catch (error) {
-					this.updateStatus(`Send error: ${error.message}`);
-					console.error("[BLE] Write error:", error);
-				}
-			},
-
+                if (!this.connected || !this.bleCharacteristic) {
+                    this.updateStatus('Not connected to device');
+                    return;
+                }
+                
+                try {
+                    const packet = new Uint8Array(17);
+                    packet.set(data);
+                    await this.bleCharacteristic.writeValue(packet);
+                    this.updateStatus('Data sent successfully');
+                } catch (error) {
+                    this.updateStatus(`Send error: ${error.message}`);
+                }
+            },
             
             sendEffectData(idx) {
                 const effect = CONFIG.tabs[idx];
@@ -3008,3 +3002,57 @@
     </script>
 </body>
 </html>
+
+        async testBLEWrite() {
+            if (!this.connected || !this.bleCharacteristic) {
+                this.updateStatus("Not connected");
+                console.error("[TEST] Not connected to device");
+                return;
+            }
+
+            const testData = new Uint8Array([0x54, 0x45, 0x53, 0x54, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]); // "TEST"
+
+            try {
+                console.log("[TEST] Sending test packet: TEST (0x54455354)");
+                console.log("[TEST] Full packet:", Array.from(testData));
+
+                // Try writeValueWithResponse first
+                try {
+                    console.log("[TEST] Trying writeValueWithResponse...");
+                    await this.bleCharacteristic.writeValueWithResponse(testData);
+                    console.log("[TEST] ✓✓✓ writeValueWithResponse SUCCESS!");
+                    this.updateStatus("Test OK: writeValueWithResponse - Check ESP32 serial!");
+                    return;
+                } catch (e1) {
+                    console.log("[TEST] writeValueWithResponse failed:", e1.message);
+                }
+
+                // Try writeValueWithoutResponse
+                try {
+                    console.log("[TEST] Trying writeValueWithoutResponse...");
+                    await this.bleCharacteristic.writeValueWithoutResponse(testData);
+                    console.log("[TEST] ✓✓✓ writeValueWithoutResponse SUCCESS!");
+                    this.updateStatus("Test OK: writeValueWithoutResponse - Check ESP32 serial!");
+                    return;
+                } catch (e2) {
+                    console.log("[TEST] writeValueWithoutResponse failed:", e2.message);
+                }
+
+                // Try old writeValue
+                try {
+                    console.log("[TEST] Trying writeValue...");
+                    await this.bleCharacteristic.writeValue(testData);
+                    console.log("[TEST] ✓✓✓ writeValue SUCCESS!");
+                    this.updateStatus("Test OK: writeValue - Check ESP32 serial!");
+                    return;
+                } catch (e3) {
+                    console.log("[TEST] writeValue failed:", e3.message);
+                }
+
+                throw new Error("All write methods failed");
+
+            } catch (error) {
+                console.error("[TEST] ✗✗✗ ALL WRITE METHODS FAILED:", error);
+                this.updateStatus(`Test failed: ${error.message}`);
+            }
+        },
